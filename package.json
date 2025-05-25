@@ -5,7 +5,7 @@
     "main": "index.html",
     "scripts": {
         "dev": "netlify dev",
-        "build": "tsc && netlify deploy --prod",
+        "build": "tsc",
         "deploy": "netlify deploy --prod"
     },
     "keywords": [
