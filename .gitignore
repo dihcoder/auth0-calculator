@@ -39,4 +39,4 @@ Thumbs.db
 
 # Env variables
 .env
-.env.*  # .env.development, .env.production etc.
+.env.example
