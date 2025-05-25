@@ -99,7 +99,7 @@ function validateInput(body: any): CalculateRequest | null {
         return null;
     }
 
-        _____DEBUG_____.push(['#102: validação de entrada']);
+    _____DEBUG_____.push(['#102: validação de entrada']);
     return { a, b, operation };
 }
 
@@ -139,7 +139,7 @@ export const handler: Handler = async (event: HandlerEvent, context: HandlerCont
         return {
             statusCode: 200,
             headers,
-            body: JSON.stringify({debug: _____DEBUG_____})
+            body: JSON.stringify({ debug: _____DEBUG_____ })
         };
     }
 
@@ -204,6 +204,12 @@ export const handler: Handler = async (event: HandlerEvent, context: HandlerCont
                 const decoded = await verifyTokenSimple(token);
                 _____DEBUG_____.push(['#205: ', decoded]);
                 console.log('Token validado para usuário:', decoded?.sub || 'desconhecido');
+
+                const name = decoded?.name || 'Nome não disponível';
+                const email = decoded?.email || 'Email não disponível';
+
+                console.log('Usuário autenticado:', { name, email });
+                _____DEBUG_____.push(['#INFO: Cliente autenticado', { name, email }]);
             } catch (error) {
                 _____DEBUG_____.push(['#208: ', error]);
                 console.error('Falha na verificação do token:', error);
@@ -219,7 +225,7 @@ export const handler: Handler = async (event: HandlerEvent, context: HandlerCont
                         throw new Error('Token malformado');
                     }
                 } catch (fallbackError) {
-                        _____DEBUG_____.push(['#222: fallbackError: ', fallbackError]);
+                    _____DEBUG_____.push(['#222: fallbackError: ', fallbackError]);
                     return {
                         statusCode: 401,
                         headers,

@@ -182,7 +182,9 @@ async function calculate() {
             const payload = {
                 a: parseFloat(previousInput),
                 b: parseFloat(currentInput),
-                operation: operator
+                operation: operator,
+                name: user?.name || null,
+                email: user?.email || nul
             };
 
             console.log('Enviando requisição:', payload);
