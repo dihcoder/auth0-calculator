@@ -197,29 +197,29 @@ export const handler: Handler = async (event: HandlerEvent, context: HandlerCont
 
             const token = authHeader.substring(7);
 
-            _____DEBUG_____.push(['#199: Token extraído ', token]);
+            _____DEBUG_____.push(['#200: Token extraído ', token]);
             console.log('Token extraído (primeiros 50 chars):', token.substring(0, 50));
 
             try {
                 const decoded = await verifyTokenSimple(token);
-                _____DEBUG_____.push(['#204: ', decoded]);
+                _____DEBUG_____.push(['#205: ', decoded]);
                 console.log('Token validado para usuário:', decoded?.sub || 'desconhecido');
             } catch (error) {
-                _____DEBUG_____.push(['#207: ', error]);
+                _____DEBUG_____.push(['#208: ', error]);
                 console.error('Falha na verificação do token:', error);
 
                 // Modo de fallback: verificar se o token parece válido (não recomendado para produção)
                 try {
                     const decoded = jwt.decode(token, { complete: true });
                     if (decoded && decoded.payload) {
-                        _____DEBUG_____.push(['#214: token decodificado: ', decoded]);
+                        _____DEBUG_____.push(['#215: token decodificado: ', decoded]);
                         console.log('Usando modo de fallback - token decodificado');
                     } else {
-                        _____DEBUG_____.push(['#217: Token malformado', token]);
+                        _____DEBUG_____.push(['#218: Token malformado', token]);
                         throw new Error('Token malformado');
                     }
                 } catch (fallbackError) {
-                        _____DEBUG_____.push(['#221: fallbackError: ', fallbackError]);
+                        _____DEBUG_____.push(['#222: fallbackError: ', fallbackError]);
                     return {
                         statusCode: 401,
                         headers,
@@ -237,7 +237,7 @@ export const handler: Handler = async (event: HandlerEvent, context: HandlerCont
 
         // Verificar se o resultado é válido
         if (!isFinite(result)) {
-            _____DEBUG_____.push(['#239: Resultado inválido: ', result]);
+            _____DEBUG_____.push(['#240: Resultado inválido: ', result]);
             return {
                 statusCode: 400,
                 headers,
@@ -248,7 +248,7 @@ export const handler: Handler = async (event: HandlerEvent, context: HandlerCont
             };
         }
 
-        _____DEBUG_____.push(['#249: Cálculo realizado:', result]);
+        _____DEBUG_____.push(['#251: Cálculo realizado:', result]);
 
         console.log('Cálculo realizado:', { a, b, operation, result });
 
@@ -259,7 +259,7 @@ export const handler: Handler = async (event: HandlerEvent, context: HandlerCont
         };
 
     } catch (error) {
-        _____DEBUG_____.push(['#260: Erro no cálculo:', error]);
+        _____DEBUG_____.push(['#262: Erro no cálculo:', error]);
         console.error('Erro no cálculo:', error);
 
         return {
