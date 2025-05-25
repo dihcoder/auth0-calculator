@@ -151,7 +151,7 @@ async function calculate() {
     try {
         const token = isAuthenticated ? await auth0Client.getTokenSilently() : null;
 
-        const response = await fetch('/.netlify/functions/calculate', {
+        const response = await fetch('/.netlify/functions/calc', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
