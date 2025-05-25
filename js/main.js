@@ -202,6 +202,7 @@ async function calculate() {
             });
 
             console.log('Status da resposta:', response.status);
+            console.log('Resposta:', response)
 
             if (!response.ok) {
                 const error = await response.json();
