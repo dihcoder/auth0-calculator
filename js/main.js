@@ -1,9 +1,14 @@
+const API_URL = '/.netlify/functions/calculate';
+const AUTH0_AUDIENCE_URL = 'https://auth0-calculator.netlify.app/';
+
 // Auth0 Configuration (substitua pelos seus valores)
 const auth0Client = new auth0.Auth0Client({
     domain: 'dev-uddg6jbjtj3w6kbp.us.auth0.com',
     clientId: 'SmiY9TAFSH7YUDiUy7k0Z6CJKFW2HP2K',
     authorizationParams: {
-        redirect_uri: window.location.origin
+        redirect_uri: window.location.origin,
+        audience: AUTH0_AUDIENCE_URL,
+        scope: 'openid profile email'
     }
 });
 
@@ -153,20 +158,56 @@ function deleteDigit() {
 async function calculate() {
     if (operator && previousInput !== null) {
         try {
-            const token = isAuthenticated ? await auth0Client.getTokenSilently() : null;
+            let token = null;
 
-            const response = await fetch('/.netlify/functions/calculate', {
+            // Verificar se a operação requer autenticação
+            const requiresAuth = operator === '*' || operator === '/';
+
+            if (requiresAuth) {
+                if (!isAuthenticated) {
+                    showNotification('Login necessário para esta operação', 'error');
+                    return;
+                }
+
+                try {
+                    token = await auth0Client.getTokenSilently({
+                        authorizationParams: {
+                            audience: AUTH0_AUDIENCE_URL,
+                            scope: 'openid profile email'
+                        }
+                    });
+                    console.log('Token obtido:', token ? 'Sim' : 'Não');
+                } catch (tokenError) {
+                    console.error('Erro ao obter token:', tokenError);
+                    showNotification('Erro ao obter token de autorização', 'error');
+                    return;
+                }
+            }
+
+            const payload = {
+                a: parseFloat(previousInput),
+                b: parseFloat(currentInput),
+                operation: operator
+            };
+
+            console.log('Enviando requisição:', payload);
+
+            const headers = {
+                'Content-Type': 'application/json'
+            };
+
+            if (token) {
+                headers['Authorization'] = `Bearer ${token}`;
+                console.log('Header Authorization adicionado');
+            }
+
+            const response = await fetch(API_URL, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    ...(token && { 'Authorization': `Bearer ${token}` })
-                },
-                body: JSON.stringify({
-                    a: parseFloat(previousInput),
-                    b: parseFloat(currentInput),
-                    operation: operator
-                })
+                headers,
+                body: JSON.stringify(payload)
             });
+
+            console.log('Status da resposta:', response.status);
 
             if (!response.ok) {
                 const error = await response.json();
