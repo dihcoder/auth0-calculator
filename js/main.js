@@ -6,9 +6,7 @@ const auth0Client = new auth0.Auth0Client({
     domain: 'dev-uddg6jbjtj3w6kbp.us.auth0.com',
     clientId: 'SmiY9TAFSH7YUDiUy7k0Z6CJKFW2HP2K',
     authorizationParams: {
-        redirect_uri: window.location.origin,
-        audience: AUTH0_AUDIENCE_URL,
-        scope: 'openid profile email'
+        redirect_uri: window.location.origin
     }
 });
 
@@ -171,12 +169,7 @@ async function calculate() {
                 }
 
                 try {
-                    token = await auth0Client.getTokenSilently({
-                        authorizationParams: {
-                            audience: AUTH0_AUDIENCE_URL,
-                            scope: 'openid profile email'
-                        }
-                    });
+                    token = await auth0Client.getTokenSilently();
                     console.log('Token obtido:', token ? 'Sim' : 'Não');
                 } catch (tokenError) {
                     console.error('Erro ao obter token:', tokenError);
