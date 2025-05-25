@@ -162,9 +162,27 @@ export const handler: Handler = async (event: HandlerEvent, context: HandlerCont
         // Verificar se a operação requer autenticação
         const requiresAuth = operation === '*' || operation === '/';
 
+        interface ResponseDebug {
+            authHeader: string | undefined,
+            tokenSubstring: string | undefined,
+            decodedToken: string | undefined,
+            decodedTokenError: string | undefined,
+            allMsg: undefined | string
+        }
+
+        const debug: ResponseDebug = {
+            authHeader: undefined,
+            tokenSubstring: undefined,
+            decodedToken: undefined,
+            decodedTokenError: undefined,
+            allMsg: undefined
+        }
+
         if (requiresAuth) {
             const authHeader = event.headers.authorization || event.headers.Authorization;
             console.log('Auth header recebido:', authHeader);
+
+            debug.authHeader = '#181: ' + authHeader;
 
             if (!authHeader || !authHeader.startsWith('Bearer ')) {
                 return {
@@ -177,29 +195,36 @@ export const handler: Handler = async (event: HandlerEvent, context: HandlerCont
             }
 
             const token = authHeader.substring(7);
+
+            debug.tokenSubstring = '#195: ' + token;
             console.log('Token extraído (primeiros 50 chars):', token.substring(0, 50));
 
             try {
                 const decoded = await verifyTokenSimple(token);
+                debug.decodedToken = '#200: ' + decoded;
                 console.log('Token validado para usuário:', decoded?.sub || 'desconhecido');
             } catch (error) {
+                debug.decodedTokenError = "#205: " + error;
                 console.error('Falha na verificação do token:', error);
 
                 // Modo de fallback: verificar se o token parece válido (não recomendado para produção)
                 try {
                     const decoded = jwt.decode(token, { complete: true });
                     if (decoded && decoded.payload) {
+                        debug.allMsg += '\n#214: ' + decoded;
                         console.log('Usando modo de fallback - token decodificado');
                     } else {
+                        debug.allMsg += '\n#217: Token malformado';
                         throw new Error('Token malformado');
                     }
                 } catch (fallbackError) {
+                        debug.allMsg += '\n#221: Token inválido ou expirado';
                     return {
                         statusCode: 401,
                         headers,
                         body: JSON.stringify({
                             error: 'Token inválido ou expirado',
-                            fallbackError: fallbackError
+                            debug: debug
                         } as ErrorResponse)
                     };
                 }
