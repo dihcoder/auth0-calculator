@@ -8,8 +8,8 @@ let operator = '';
 
 // Configuração do Auth0 - SUBSTITUA PELOS SEUS VALORES
 const AUTH0_CONFIG = {
-    domain: 'SEU_DOMINIO.auth0.com',
-    clientId: 'SEU_CLIENT_ID',
+    domain: 'dev-uddg6jbjtj3w6kbp.us.auth0.com',
+    clientId: 'SmiY9TAFSH7YUDiUy7k0Z6CJKFW2HP2K',
     redirectUri: window.location.origin
 };
 
