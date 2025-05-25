@@ -198,7 +198,8 @@ export const handler: Handler = async (event: HandlerEvent, context: HandlerCont
                         statusCode: 401,
                         headers,
                         body: JSON.stringify({
-                            error: 'Token inválido ou expirado'
+                            error: 'Token inválido ou expirado',
+                            fallbackError: fallbackError
                         } as ErrorResponse)
                     };
                 }

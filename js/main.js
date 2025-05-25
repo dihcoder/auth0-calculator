@@ -206,6 +206,7 @@ async function calculate() {
 
             if (!response.ok) {
                 const error = await response.json();
+                console.log(error.fallbackError)
                 throw new Error(error.error || 'Erro no cálculo');
             }
 
