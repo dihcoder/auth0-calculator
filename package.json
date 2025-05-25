@@ -1,0 +1,30 @@
+{
+    "name": "calculadora-auth0-netlify",
+    "version": "1.0.0",
+    "description": "Calculadora com autenticação Auth0 e Netlify Functions",
+    "main": "index.html",
+    "scripts": {
+        "dev": "netlify dev",
+        "build": "netlify build",
+        "deploy": "netlify deploy --prod"
+    },
+    "keywords": [
+        "calculator",
+        "auth0",
+        "netlify",
+        "typescript",
+        "serverless"
+    ],
+    "author": "Seu Nome",
+    "license": "MIT",
+    "dependencies": {
+        "@netlify/functions": "^2.0.0",
+        "jsonwebtoken": "^9.0.2",
+        "jwks-rsa": "^3.0.1"
+    },
+    "devDependencies": {
+        "@types/jsonwebtoken": "^9.0.3",
+        "@types/node": "^20.5.0",
+        "typescript": "^5.1.6"
+    }
+}

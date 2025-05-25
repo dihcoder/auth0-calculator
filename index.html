@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculadora - Auth0</title>
+    <script src="https://cdn.auth0.com/js/auth0-spa-js/2.0/auth0-spa-js.production.js"></script>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🧮 Calculadora</h1>
+        </div>
+
+        <div class="auth-section">
+            <div class="user-info" id="userInfo">
+                Não autenticado
+            </div>
+            <button class="auth-btn login-btn" id="authBtn" onclick="handleAuth()">
+                Entrar
+            </button>
+        </div>
+
+        <div class="calculator">
+            <input type="text" class="display" id="display" readonly placeholder="0">
+
+            <div class="buttons">
+                <button class="btn btn-clear" onclick="clearDisplay()">C</button>
+                <button class="btn btn-clear" onclick="deleteLast()">⌫</button>
+                <button class="btn btn-operator protected" onclick="setOperator('/')" id="divBtn">÷</button>
+                <button class="btn btn-operator protected" onclick="setOperator('*')" id="mulBtn">×</button>
+
+                <button class="btn btn-number" onclick="addNumber('7')">7</button>
+                <button class="btn btn-number" onclick="addNumber('8')">8</button>
+                <button class="btn btn-number" onclick="addNumber('9')">9</button>
+                <button class="btn btn-operator" onclick="setOperator('-')">-</button>
+
+                <button class="btn btn-number" onclick="addNumber('4')">4</button>
+                <button class="btn btn-number" onclick="addNumber('5')">5</button>
+                <button class="btn btn-number" onclick="addNumber('6')">6</button>
+                <button class="btn btn-operator" onclick="setOperator('+')">+</button>
+
+                <button class="btn btn-number" onclick="addNumber('1')">1</button>
+                <button class="btn btn-number" onclick="addNumber('2')">2</button>
+                <button class="btn btn-number" onclick="addNumber('3')">3</button>
+                <button class="btn btn-equals" onclick="calculate()" rowspan="2">=</button>
+
+                <button class="btn btn-number" onclick="addNumber('0')" style="grid-column: span 2;">0</button>
+                <button class="btn btn-number" onclick="addNumber('.')">.</button>
+            </div>
+
+            <div class="loading" id="loading">
+                Calculando...
+            </div>
+
+            <div class="result" id="result" style="display: none;"></div>
+        </div>
+
+        <div class="protected-info">
+            <strong>ℹ️ Informação:</strong><br>
+            Soma e subtração são livres. Para multiplicação e divisão, faça login.
+        </div>
+    </div>
+
+    <script src="js/main.js"></script>
+</body>
+
+</html>
