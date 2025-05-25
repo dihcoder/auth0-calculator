@@ -82,10 +82,9 @@ function updateUIUnauthenticated() {
 
 // Login
 async function login() {
-    console.log('Tentando fazer login')
-    return
     try {
         await auth0Client.loginWithRedirect();
+        console.log('Tentando fazer login')
     } catch (error) {
         console.error('Erro no login:', error);
         showNotification('Erro ao fazer login', 'error');
