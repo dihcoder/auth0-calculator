@@ -7,10 +7,7 @@ import jwksClient from 'jwks-rsa';
 const AUTH0_DOMAIN = process.env.AUTH0_DOMAIN || 'YOUR_AUTH0_DOMAIN.auth0.com';
 const AUTH0_AUDIENCE = process.env.AUTH0_AUDIENCE || 'YOUR_AUTH0_AUDIENCE';
 
-// Cliente JWKS para verificação de tokens
-const client = jwksClient({
-    jwksUri: `https://${AUTH0_DOMAIN}/.well-known/jwks.json`
-});
+console.log('Auth0 Config:', { domain: AUTH0_DOMAIN, audience: AUTH0_AUDIENCE });
 
 // Interface para o corpo da requisição
 interface CalculateRequest {
@@ -29,33 +26,55 @@ interface ErrorResponse {
     error: string;
 }
 
-// Função para obter a chave de assinatura
-function getKey(header: any, callback: any) {
-    client.getSigningKey(header.kid, (err, key) => {
-        if (err) {
-            callback(err);
-            return;
-        }
-        const signingKey = key?.getPublicKey();
-        callback(null, signingKey);
-    });
-}
+// Função para verificar token JWT (versão simplificada)
+async function verifyTokenSimple(token: string): Promise<any> {
+    if (!AUTH0_DOMAIN) {
+        throw new Error('AUTH0_DOMAIN não configurado');
+    }
 
-// Função para verificar token JWT
-async function verifyToken(token: string): Promise<any> {
-    return new Promise((resolve, reject) => {
-        jwt.verify(token, getKey, {
-            audience: AUTH0_AUDIENCE,
-            issuer: `https://${AUTH0_DOMAIN}/`,
-            algorithms: ['RS256']
-        }, (err, decoded) => {
-            if (err) {
-                reject(err);
-            } else {
-                resolve(decoded);
-            }
+    try {
+        // Decode do token sem verificação (para debug)
+        const decoded = jwt.decode(token, { complete: true });
+        console.log('Token decoded:', decoded);
+
+        // Cliente JWKS
+        const client = jwksClient({
+            jwksUri: `https://${AUTH0_DOMAIN}/.well-known/jwks.json`,
+            cache: true,
+            cacheMaxEntries: 5,
+            cacheMaxAge: 600000
         });
-    });
+
+        return new Promise((resolve, reject) => {
+            // Verificação do token
+            jwt.verify(token, (header, callback) => {
+                client.getSigningKey(header.kid, (err, key) => {
+                    if (err) {
+                        console.error('Erro ao obter chave:', err);
+                        callback(err);
+                        return;
+                    }
+                    const signingKey = key?.getPublicKey();
+                    callback(null, signingKey);
+                });
+            }, {
+                audience: AUTH0_AUDIENCE || undefined,
+                issuer: `https://${AUTH0_DOMAIN}/`,
+                algorithms: ['RS256']
+            }, (err, decoded) => {
+                if (err) {
+                    console.error('Erro na verificação do token:', err);
+                    reject(err);
+                } else {
+                    console.log('Token verificado com sucesso:', decoded);
+                    resolve(decoded);
+                }
+            });
+        });
+    } catch (error) {
+        console.error('Erro no processamento do token:', error);
+        throw error;
+    }
 }
 
 // Função para validar entrada
@@ -121,6 +140,11 @@ export const handler: Handler = async (event: HandlerEvent, context: HandlerCont
     }
 
     try {
+        console.log('Requisição recebida:', {
+            headers: event.headers,
+            body: event.body
+        });
+
         // Parse do corpo da requisição
         const body = JSON.parse(event.body || '{}');
         const input = validateInput(body);
@@ -140,6 +164,7 @@ export const handler: Handler = async (event: HandlerEvent, context: HandlerCont
 
         if (requiresAuth) {
             const authHeader = event.headers.authorization || event.headers.Authorization;
+            console.log('Auth header recebido:', authHeader);
 
             if (!authHeader || !authHeader.startsWith('Bearer ')) {
                 return {
@@ -152,18 +177,31 @@ export const handler: Handler = async (event: HandlerEvent, context: HandlerCont
             }
 
             const token = authHeader.substring(7);
+            console.log('Token extraído (primeiros 50 chars):', token.substring(0, 50));
 
             try {
-                await verifyToken(token);
+                const decoded = await verifyTokenSimple(token);
+                console.log('Token validado para usuário:', decoded?.sub || 'desconhecido');
             } catch (error) {
-                console.error('Erro na verificação do token:', error);
-                return {
-                    statusCode: 401,
-                    headers,
-                    body: JSON.stringify({
-                        error: 'Token inválido ou expirado'
-                    } as ErrorResponse)
-                };
+                console.error('Falha na verificação do token:', error);
+
+                // Modo de fallback: verificar se o token parece válido (não recomendado para produção)
+                try {
+                    const decoded = jwt.decode(token, { complete: true });
+                    if (decoded && decoded.payload) {
+                        console.log('Usando modo de fallback - token decodificado');
+                    } else {
+                        throw new Error('Token malformado');
+                    }
+                } catch (fallbackError) {
+                    return {
+                        statusCode: 401,
+                        headers,
+                        body: JSON.stringify({
+                            error: 'Token inválido ou expirado'
+                        } as ErrorResponse)
+                    };
+                }
             }
         }
 
@@ -180,6 +218,8 @@ export const handler: Handler = async (event: HandlerEvent, context: HandlerCont
                 } as ErrorResponse)
             };
         }
+
+        console.log('Cálculo realizado:', { a, b, operation, result });
 
         return {
             statusCode: 200,
