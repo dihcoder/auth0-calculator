@@ -6,7 +6,8 @@ const auth0Client = new auth0.Auth0Client({
     domain: 'dev-uddg6jbjtj3w6kbp.us.auth0.com',
     clientId: 'SmiY9TAFSH7YUDiUy7k0Z6CJKFW2HP2K',
     authorizationParams: {
-        redirect_uri: window.location.origin
+        redirect_uri: window.location.origin,
+        audience: 'https://auth0-calculator.netlify.app/'
     }
 });
 
