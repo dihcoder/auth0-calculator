@@ -255,7 +255,7 @@ export const handler: Handler = async (event: HandlerEvent, context: HandlerCont
         return {
             statusCode: 200,
             headers,
-            body: JSON.stringify({ result, debug: _____DEBUG_____ } as CalculateResponse)
+            body: JSON.stringify({ result: result, debug: _____DEBUG_____ } as CalculateResponse)
         };
 
     } catch (error) {
