@@ -1,246 +1,214 @@
-let auth0Client = null;
-let isAuthenticated = false;
-let currentUser = null;
-
-let currentNumber = '';
-let previousNumber = '';
-let operator = '';
-
-// Configuração do Auth0 - SUBSTITUA PELOS SEUS VALORES
-const AUTH0_CONFIG = {
+// Auth0 Configuration (substitua pelos seus valores)
+const auth0Client = new auth0.Auth0Client({
     domain: 'dev-uddg6jbjtj3w6kbp.us.auth0.com',
     clientId: 'SmiY9TAFSH7YUDiUy7k0Z6CJKFW2HP2K',
-    redirectUri: window.location.origin
-};
+    authorizationParams: {
+        redirect_uri: window.location.origin
+    }
+});
 
-// Inicializar Auth0
-async function initAuth0() {
+// Estado da calculadora
+let currentInput = '0';
+let operator = null;
+let previousInput = null;
+let isAuthenticated = false;
+let user = null;
+
+// Elementos DOM
+const display = document.getElementById('display');
+const userInfo = document.getElementById('userInfo');
+const authButtons = document.getElementById('authButtons');
+const loginBtn = document.getElementById('loginBtn');
+const userName = document.getElementById('userName');
+const userAvatar = document.getElementById('userAvatar');
+const divideBtn = document.getElementById('divideBtn');
+const multiplyBtn = document.getElementById('multiplyBtn');
+const notification = document.getElementById('notification');
+
+// Inicialização
+async function init() {
     try {
-        auth0Client = await auth0.createAuth0Client({
-            domain: AUTH0_CONFIG.domain,
-            clientId: AUTH0_CONFIG.clientId,
-            authorizationParams: {
-                redirect_uri: AUTH0_CONFIG.redirectUri
-            }
-        });
-
-        // Verificar se há callback de login
+        // Verificar se há callback de autenticação
         const query = window.location.search;
         if (query.includes('code=') && query.includes('state=')) {
             await auth0Client.handleRedirectCallback();
             window.history.replaceState({}, document.title, '/');
         }
 
-        // Verificar status de autenticação
+        // Verificar se o usuário está autenticado
         isAuthenticated = await auth0Client.isAuthenticated();
 
         if (isAuthenticated) {
-            currentUser = await auth0Client.getUser();
+            user = await auth0Client.getUser();
+            updateUIAuthenticated();
+        } else {
+            updateUIUnauthenticated();
         }
-
-        updateUI();
     } catch (error) {
-        console.error('Erro ao inicializar Auth0:', error);
-        showResult('Erro na autenticação. Verifique a configuração.', 'error');
+        console.error('Erro na inicialização:', error);
+        showNotification('Erro na inicialização da aplicação', 'error');
     }
 }
 
-// Atualizar interface baseada no status de autenticação
-function updateUI() {
-    const userInfo = document.getElementById('userInfo');
-    const authBtn = document.getElementById('authBtn');
-    const divBtn = document.getElementById('divBtn');
-    const mulBtn = document.getElementById('mulBtn');
+// Atualizar UI para usuário autenticado
+function updateUIAuthenticated() {
+    userInfo.style.display = 'flex';
+    userName.textContent = user.name || user.email;
+    userAvatar.textContent = (user.name || user.email).charAt(0).toUpperCase();
 
-    if (isAuthenticated && currentUser) {
-        userInfo.textContent = `Olá, ${currentUser.name || currentUser.email}`;
-        authBtn.textContent = 'Sair';
-        authBtn.className = 'auth-btn logout-btn';
+    authButtons.innerHTML = '<button class="btn btn-secondary" onclick="logout()">Logout</button>';
 
-        // Habilitar operações protegidas
-        divBtn.classList.add('authenticated');
-        mulBtn.classList.add('authenticated');
-    } else {
-        userInfo.textContent = 'Não autenticado';
-        authBtn.textContent = 'Entrar';
-        authBtn.className = 'auth-btn login-btn';
+    divideBtn.disabled = false;
+    multiplyBtn.disabled = false;
+    divideBtn.title = '';
+    multiplyBtn.title = '';
+}
 
-        // Desabilitar operações protegidas
-        divBtn.classList.remove('authenticated');
-        mulBtn.classList.remove('authenticated');
+// Atualizar UI para usuário não autenticado
+function updateUIUnauthenticated() {
+    userInfo.style.display = 'none';
+    authButtons.innerHTML = '<button class="btn btn-primary" onclick="login()">Login</button>';
+
+    divideBtn.disabled = true;
+    multiplyBtn.disabled = true;
+    divideBtn.title = 'Login necessário';
+    multiplyBtn.title = 'Login necessário';
+}
+
+// Login
+async function login() {
+    try {
+        await auth0Client.loginWithRedirect();
+    } catch (error) {
+        console.error('Erro no login:', error);
+        showNotification('Erro ao fazer login', 'error');
     }
 }
 
-// Gerenciar autenticação
-async function handleAuth() {
-    if (isAuthenticated) {
-        // Logout
+// Logout
+async function logout() {
+    try {
         await auth0Client.logout({
             logoutParams: {
                 returnTo: window.location.origin
             }
         });
-    } else {
-        // Login
-        await auth0Client.loginWithRedirect();
+    } catch (error) {
+        console.error('Erro no logout:', error);
+        showNotification('Erro ao fazer logout', 'error');
     }
+}
+
+// Função para mostrar notificações
+function showNotification(message, type = 'success') {
+    notification.textContent = message;
+    notification.className = `notification ${type} show`;
+
+    setTimeout(() => {
+        notification.classList.remove('show');
+    }, 3000);
 }
 
 // Funções da calculadora
-function addNumber(num) {
-    const display = document.getElementById('display');
-
-    if (num === '.' && currentNumber.includes('.')) {
-        return;
-    }
-
-    if (currentNumber === '0' && num !== '.') {
-        currentNumber = num;
-    } else {
-        currentNumber += num;
-    }
-
-    display.value = currentNumber;
-    hideResult();
+function updateDisplay() {
+    display.textContent = currentInput;
 }
 
-function setOperator(op) {
-    // Verificar se a operação requer autenticação
-    if ((op === '*' || op === '/') && !isAuthenticated) {
-        showResult('Esta operação requer autenticação. Faça login para continuar.', 'info');
-        return;
+function inputNumber(num) {
+    if (currentInput === '0') {
+        currentInput = num;
+    } else {
+        currentInput += num;
     }
+    updateDisplay();
+}
 
-    if (currentNumber === '') return;
-
-    if (previousNumber !== '' && operator !== '') {
+function inputOperator(op) {
+    if (operator && previousInput !== null) {
         calculate();
     }
 
+    previousInput = currentInput;
+    currentInput = '0';
     operator = op;
-    previousNumber = currentNumber;
-    currentNumber = '';
-
-    const display = document.getElementById('display');
-    display.value = previousNumber + ' ' + getOperatorSymbol(op);
-}
-
-function getOperatorSymbol(op) {
-    switch (op) {
-        case '+': return '+';
-        case '-': return '-';
-        case '*': return '×';
-        case '/': return '÷';
-        default: return op;
-    }
-}
-
-async function calculate() {
-    if (previousNumber === '' || currentNumber === '' || operator === '') {
-        return;
-    }
-
-    // Verificar se a operação requer autenticação
-    if ((operator === '*' || operator === '/') && !isAuthenticated) {
-        showResult('Esta operação requer autenticação. Faça login para continuar.', 'info');
-        return;
-    }
-
-    showLoading(true);
-
-    try {
-        const token = isAuthenticated ? await auth0Client.getTokenSilently() : null;
-
-        const response = await fetch('/.netlify/functions/calc', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                ...(token && { 'Authorization': `Bearer ${token}` })
-            },
-            body: JSON.stringify({
-                a: parseFloat(previousNumber),
-                b: parseFloat(currentNumber),
-                operation: operator
-            })
-        });
-
-        const data = await response.json();
-
-        if (!response.ok) {
-            console.log(data, response)
-            throw new Error(data.error || 'Erro no cálculo');
-        }
-
-        const display = document.getElementById('display');
-        display.value = data.result;
-
-        showResult(`${previousNumber} ${getOperatorSymbol(operator)} ${currentNumber} = ${data.result}`, 'success');
-
-        // Reset
-        currentNumber = data.result.toString();
-        previousNumber = '';
-        operator = '';
-
-    } catch (error) {
-        console.error('Erro no cálculo:', error);
-        showResult(error.message || 'Erro ao realizar cálculo', 'error');
-    } finally {
-        showLoading(false);
-    }
 }
 
 function clearDisplay() {
-    currentNumber = '';
-    previousNumber = '';
-    operator = '';
-    document.getElementById('display').value = '';
-    hideResult();
+    currentInput = '0';
+    operator = null;
+    previousInput = null;
+    updateDisplay();
 }
 
-function deleteLast() {
-    if (currentNumber.length > 0) {
-        currentNumber = currentNumber.slice(0, -1);
-        document.getElementById('display').value = currentNumber;
+function deleteDigit() {
+    if (currentInput.length > 1) {
+        currentInput = currentInput.slice(0, -1);
+    } else {
+        currentInput = '0';
     }
+    updateDisplay();
 }
 
-function showLoading(show) {
-    const loading = document.getElementById('loading');
-    loading.classList.toggle('show', show);
-}
+// Calcular resultado
+async function calculate() {
+    if (operator && previousInput !== null) {
+        try {
+            const token = isAuthenticated ? await auth0Client.getTokenSilently() : null;
 
-function showResult(message, type) {
-    const result = document.getElementById('result');
-    result.textContent = message;
-    result.className = `result ${type}`;
-    result.style.display = 'flex';
-}
+            const response = await fetch('/.netlify/functions/calculate', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...(token && { 'Authorization': `Bearer ${token}` })
+                },
+                body: JSON.stringify({
+                    a: parseFloat(previousInput),
+                    b: parseFloat(currentInput),
+                    operation: operator
+                })
+            });
 
-function hideResult() {
-    const result = document.getElementById('result');
-    result.style.display = 'none';
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.error || 'Erro no cálculo');
+            }
+
+            const result = await response.json();
+            currentInput = result.result.toString();
+            operator = null;
+            previousInput = null;
+            updateDisplay();
+
+        } catch (error) {
+            console.error('Erro no cálculo:', error);
+            showNotification(error.message || 'Erro ao calcular', 'error');
+        }
+    }
 }
 
 // Suporte a teclado
-document.addEventListener('keydown', function (event) {
-    const key = event.key;
-
-    if (key >= '0' && key <= '9') {
-        addNumber(key);
-    } else if (key === '.') {
-        addNumber('.');
-    } else if (['+', '-', '*', '/'].includes(key)) {
-        setOperator(key);
-    } else if (key === 'Enter' || key === '=') {
+document.addEventListener('keydown', (e) => {
+    if (e.key >= '0' && e.key <= '9') {
+        inputNumber(e.key);
+    } else if (e.key === '.') {
+        inputNumber('.');
+    } else if (e.key === '+') {
+        inputOperator('+');
+    } else if (e.key === '-') {
+        inputOperator('-');
+    } else if (e.key === '*') {
+        if (!multiplyBtn.disabled) inputOperator('*');
+    } else if (e.key === '/') {
+        e.preventDefault();
+        if (!divideBtn.disabled) inputOperator('/');
+    } else if (e.key === 'Enter' || e.key === '=') {
         calculate();
-    } else if (key === 'Escape' || key === 'c' || key === 'C') {
+    } else if (e.key === 'Escape' || e.key === 'c' || e.key === 'C') {
         clearDisplay();
-    } else if (key === 'Backspace') {
-        deleteLast();
+    } else if (e.key === 'Backspace') {
+        deleteDigit();
     }
 });
 
-// Inicializar aplicação
-document.addEventListener('DOMContentLoaded', function () {
-    initAuth0();
-});
+// Inicializar a aplicação
+init();

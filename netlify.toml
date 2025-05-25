@@ -1,18 +1,30 @@
 [build]
-  command = "npm run build"
-  functions = "dist/functions"
+  functions = "netlify/functions"
   publish = "."
+
+[build.environment]
+  NODE_VERSION = "18"
 
 [functions]
   node_bundler = "esbuild"
 
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-XSS-Protection = "1; mode=block"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+
+[[headers]]
+  for = "/.netlify/functions/*"
+  [headers.values]
+    Access-Control-Allow-Origin = "*"
+    Access-Control-Allow-Headers = "Content-Type, Authorization"
+    Access-Control-Allow-Methods = "GET, POST, PUT, DELETE, OPTIONS"
+
+# Redirecionamento para SPA
 [[redirects]]
   from = "/api/*"
   to = "/.netlify/functions/:splat"
   status = 200
-
-[dev]
-  command = "npm run dev"
-  port = 8888
-  publish = "."
-  functions = "netlify/functions"

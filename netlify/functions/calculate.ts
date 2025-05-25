@@ -3,26 +3,28 @@ import { Handler, HandlerEvent, HandlerContext } from '@netlify/functions';
 import jwt from 'jsonwebtoken';
 import jwksClient from 'jwks-rsa';
 
-// Configuração do Auth0 - SUBSTITUA PELOS SEUS VALORES
-const AUTH0_DOMAIN = process.env.AUTH0_DOMAIN || 'SEU_DOMINIO.auth0.com';
-const AUTH0_AUDIENCE = process.env.AUTH0_AUDIENCE || 'https://SEU_DOMINIO.auth0.com/api/v2/';
+// Configuração do Auth0 (substitua pelos seus valores)
+const AUTH0_DOMAIN = process.env.AUTH0_DOMAIN || 'YOUR_AUTH0_DOMAIN.auth0.com';
+const AUTH0_AUDIENCE = process.env.AUTH0_AUDIENCE || 'YOUR_AUTH0_AUDIENCE';
 
-// Cliente JWKS para verificar tokens
+// Cliente JWKS para verificação de tokens
 const client = jwksClient({
     jwksUri: `https://${AUTH0_DOMAIN}/.well-known/jwks.json`
 });
 
-interface CalculationRequest {
+// Interface para o corpo da requisição
+interface CalculateRequest {
     a: number;
     b: number;
     operation: '+' | '-' | '*' | '/';
 }
 
-interface CalculationResponse {
+// Interface para a resposta
+interface CalculateResponse {
     result: number;
-    operation: string;
 }
 
+// Interface para erro
 interface ErrorResponse {
     error: string;
 }
@@ -39,8 +41,8 @@ function getKey(header: any, callback: any) {
     });
 }
 
-// Função para verificar o token JWT
-function verifyToken(token: string): Promise<any> {
+// Função para verificar token JWT
+async function verifyToken(token: string): Promise<any> {
     return new Promise((resolve, reject) => {
         jwt.verify(token, getKey, {
             audience: AUTH0_AUDIENCE,
@@ -57,11 +59,7 @@ function verifyToken(token: string): Promise<any> {
 }
 
 // Função para validar entrada
-function validateInput(body: any): CalculationRequest | null {
-    if (!body || typeof body !== 'object') {
-        return null;
-    }
-
+function validateInput(body: any): CalculateRequest | null {
     const { a, b, operation } = body;
 
     if (typeof a !== 'number' || typeof b !== 'number') {
@@ -94,11 +92,6 @@ function performCalculation(a: number, b: number, operation: string): number {
     }
 }
 
-// Função para verificar se a operação requer autenticação
-function requiresAuth(operation: string): boolean {
-    return operation === '*' || operation === '/';
-}
-
 // Handler principal
 export const handler: Handler = async (event: HandlerEvent, context: HandlerContext) => {
     // Headers CORS
@@ -106,111 +99,108 @@ export const handler: Handler = async (event: HandlerEvent, context: HandlerCont
         'Access-Control-Allow-Origin': '*',
         'Access-Control-Allow-Headers': 'Content-Type, Authorization',
         'Access-Control-Allow-Methods': 'POST, OPTIONS',
-        'Content-Type': 'application/json',
+        'Content-Type': 'application/json'
     };
 
-    // Handle preflight requests
+    // Responder a requisições OPTIONS (preflight CORS)
     if (event.httpMethod === 'OPTIONS') {
         return {
             statusCode: 200,
             headers,
-            body: '',
+            body: ''
         };
     }
 
-    // Apenas POST é permitido
+    // Verificar método HTTP
     if (event.httpMethod !== 'POST') {
         return {
             statusCode: 405,
             headers,
-            body: JSON.stringify({ error: 'Método não permitido' } as ErrorResponse),
+            body: JSON.stringify({ error: 'Método não permitido' } as ErrorResponse)
         };
     }
 
     try {
-        // Parse do body
-        let requestBody;
-        try {
-            requestBody = JSON.parse(event.body || '{}');
-        } catch (error) {
+        // Parse do corpo da requisição
+        const body = JSON.parse(event.body || '{}');
+        const input = validateInput(body);
+
+        if (!input) {
             return {
                 statusCode: 400,
                 headers,
-                body: JSON.stringify({ error: 'JSON inválido' } as ErrorResponse),
+                body: JSON.stringify({ error: 'Entrada inválida' } as ErrorResponse)
             };
         }
 
-        // Validar entrada
-        const validatedInput = validateInput(requestBody);
-        if (!validatedInput) {
-            return {
-                statusCode: 400,
-                headers,
-                body: JSON.stringify({ error: 'Parâmetros inválidos. Esperado: {a: number, b: number, operation: string}' } as ErrorResponse),
-            };
-        }
-
-        const { a, b, operation } = validatedInput;
+        const { a, b, operation } = input;
 
         // Verificar se a operação requer autenticação
-        if (requiresAuth(operation)) {
+        const requiresAuth = operation === '*' || operation === '/';
+
+        if (requiresAuth) {
             const authHeader = event.headers.authorization || event.headers.Authorization;
 
             if (!authHeader || !authHeader.startsWith('Bearer ')) {
                 return {
                     statusCode: 401,
                     headers,
-                    body: JSON.stringify({ error: 'Token de autenticação requerido para esta operação' } as ErrorResponse),
+                    body: JSON.stringify({
+                        error: 'Token de autorização necessário para multiplicação e divisão'
+                    } as ErrorResponse)
                 };
             }
 
-            const token = authHeader.substring(7); // Remove 'Bearer '
+            const token = authHeader.substring(7);
 
             try {
-                // Verificar o token
                 await verifyToken(token);
             } catch (error) {
                 console.error('Erro na verificação do token:', error);
                 return {
                     statusCode: 401,
                     headers,
-                    body: JSON.stringify({ error: 'Token inválido ou expirado' } as ErrorResponse),
+                    body: JSON.stringify({
+                        error: 'Token inválido ou expirado'
+                    } as ErrorResponse)
                 };
             }
         }
 
         // Realizar o cálculo
-        let result: number;
-        try {
-            result = performCalculation(a, b, operation);
-        } catch (calculationError: any) {
+        const result = performCalculation(a, b, operation);
+
+        // Verificar se o resultado é válido
+        if (!isFinite(result)) {
             return {
                 statusCode: 400,
                 headers,
-                body: JSON.stringify({ error: calculationError.message } as ErrorResponse),
+                body: JSON.stringify({
+                    error: 'Resultado inválido'
+                } as ErrorResponse)
             };
         }
-
-        // Arredondar resultado para evitar problemas de ponto flutuante
-        const roundedResult = Math.round(result * 1000000000) / 1000000000;
-
-        const response: CalculationResponse = {
-            result: roundedResult,
-            operation: `${a} ${operation} ${b}`,
-        };
 
         return {
             statusCode: 200,
             headers,
-            body: JSON.stringify(response),
+            body: JSON.stringify({ result } as CalculateResponse)
         };
 
     } catch (error) {
-        console.error('Erro interno:', error);
+        console.error('Erro no cálculo:', error);
+
         return {
             statusCode: 500,
             headers,
-            body: JSON.stringify({ error: 'Erro interno do servidor' } as ErrorResponse),
+            body: JSON.stringify({
+                error: error instanceof Error ? error.message : 'Erro interno do servidor'
+            } as ErrorResponse)
         };
     }
+};
+
+// Configuração do Netlify Functions
+export const config = {
+    path: "/calculate"
 };

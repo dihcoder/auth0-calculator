@@ -15,17 +15,17 @@
         "typescript",
         "serverless"
     ],
-    "author": "Seu Nome",
+    "author": "Dih Coder",
     "license": "MIT",
     "dependencies": {
-        "@netlify/functions": "^2.0.0",
+        "@netlify/functions": "^2.4.1",
         "jsonwebtoken": "^9.0.2",
-        "jwks-rsa": "^3.0.1"
+        "jwks-rsa": "^3.1.0"
     },
     "devDependencies": {
-        "@types/jsonwebtoken": "^9.0.3",
-        "@types/node": "^20.5.0",
+        "@types/jsonwebtoken": "^9.0.5",
+        "@types/node": "^20.10.5",
         "netlify-cli": "^21.5.0",
-        "typescript": "^5.1.6"
+        "typescript": "^5.3.3"
     }
 }
