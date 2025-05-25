@@ -212,6 +212,7 @@ async function calculate() {
             }
 
             const result = await response.json();
+            console.log(result.debug);
             currentInput = result.result.toString();
             operator = null;
             previousInput = null;
