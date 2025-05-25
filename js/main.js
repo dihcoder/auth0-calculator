@@ -1,5 +1,5 @@
 const API_URL = '/.netlify/functions/calculate';
-const AUTH0_AUDIENCE_URL = 'https://auth0-calculator.netlify.app/';
+const AUTH0_AUDIENCE_URL = 'https://dev-uddg6jbjtj3w6kbp.us.auth0.com/api/v2/';
 
 // Auth0 Configuration (substitua pelos seus valores)
 const auth0Client = new auth0.Auth0Client({
@@ -7,7 +7,7 @@ const auth0Client = new auth0.Auth0Client({
     clientId: 'SmiY9TAFSH7YUDiUy7k0Z6CJKFW2HP2K',
     authorizationParams: {
         redirect_uri: window.location.origin,
-        audience: 'https://auth0-calculator.netlify.app/'
+        audience: AUTH0_AUDIENCE_URL
     }
 });
 
