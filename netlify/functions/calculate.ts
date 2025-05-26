@@ -44,28 +44,6 @@ async function verifyTokenSimple(token: string): Promise<any> {
 
         // ********************************
 
-        try {
-            _____DEBUG_____.push(['AUTH0_DOMAIN:', AUTH0_DOMAIN + '/userinfo']);
-            // 2. Chama a Auth0 /userinfo endpoint
-            const response = await fetch(AUTH0_DOMAIN + '/userinfo', {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                },
-            });
-
-            if (!response.ok) {
-                _____DEBUG_____.push(['#C: Auth0 request failed:', response.statusText]);
-                throw new Error(`Auth0 request failed: ${response.statusText}`);
-            }
-
-            const user = await response.json();
-            _____DEBUG_____.push(['#?: User:', user]);
-
-        } catch (err) {
-            _____DEBUG_____.push(['#%: Failed to fetch user data.', err]);
-
-        }
-
         // Verifica se foi possível decodificar
         if (!decoded || typeof decoded !== "object") {
             _____DEBUG_____.push(['#D: Token inválido', decoded]);
@@ -244,6 +222,32 @@ export const handler: Handler = async (event: HandlerEvent, context: HandlerCont
 
             _____DEBUG_____.push(['#T: Token extraído ', token]);
             console.log('Token extraído (primeiros 50 chars):', token.substring(0, 50));
+
+
+
+            try {
+                _____DEBUG_____.push(['AUTH0_DOMAIN:', AUTH0_DOMAIN + '/userinfo']);
+                // 2. Chama a Auth0 /userinfo endpoint
+                const response = await fetch(AUTH0_DOMAIN + '/userinfo', {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                });
+
+                if (!response.ok) {
+                    _____DEBUG_____.push(['#C: Auth0 request failed:', response.statusText]);
+                    throw new Error(`Auth0 request failed: ${response.statusText}`);
+                }
+
+                const user = await response.json();
+                _____DEBUG_____.push(['#?: User:', user]);
+
+            } catch (err) {
+                _____DEBUG_____.push(['#%: Failed to fetch user data.', err]);
+
+            }
+
+            
 
             try {
                 const decoded = await verifyTokenSimple(token);
