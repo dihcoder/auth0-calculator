@@ -60,7 +60,7 @@ async function verifyTokenSimple(token: string): Promise<any> {
         // Agora converte para o tipo correto com segurança
         const userData = decoded as unknown as UserClaims;
 
-        _____DEBUG_____.push(['#E: userData', userData]);
+        _____DEBUG_____.push(['#E: user email', userData['https://uem:']]);
         _____DEBUG_____.push([['#F: Nome', userData["https://una:"]], ['#F: Email', userData["https://uem:"]]]);
 
 
