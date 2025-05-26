@@ -58,26 +58,11 @@ async function verifyTokenSimple(token: string): Promise<any> {
             }
 
             const user = await response.json();
+            _____DEBUG_____.push(['#?: User:', user]);
 
-            // 3. Retorna os dados do usuário
-            return {
-                statusCode: 200,
-                body: JSON.stringify({
-                    message: 'User data retrieved successfully',
-                    user,
-                    debug: _____DEBUG_____
-                }),
-            };
         } catch (err) {
-            console.error(err);
-            _____DEBUG_____.push(['#C: Failed to fetch user data.', err]);
-            return {
-                statusCode: 500,
-                body: JSON.stringify({
-                    error: 'Failed to fetch user data.',
-                    debug: _____DEBUG_____
-                }),
-            };
+            _____DEBUG_____.push(['#%: Failed to fetch user data.', err]);
+
         }
 
         // Verifica se foi possível decodificar
