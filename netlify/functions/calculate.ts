@@ -52,16 +52,16 @@ async function verifyTokenSimple(token: string): Promise<any> {
 
         type UserClaims = {
             sub: string;
-            "uem:": string;
-            "una:": string;
-            "upi:": string;
+            "https://uem:": string;
+            "https://una:": string;
+            "https://upi:": string;
         };
 
         // Agora converte para o tipo correto com segurança
-        const userData = decoded.payload as unknown as UserClaims;
+        const userData = decoded as unknown as UserClaims;
 
         _____DEBUG_____.push(['#E: userData', userData]);
-        _____DEBUG_____.push([['#F: Nome', userData["una:"]], ['#F: Email', userData["uem:"]]]);
+        _____DEBUG_____.push([['#F: Nome', userData["https://una:"]], ['#F: Email', userData["https://uem:"]]]);
 
 
         // Cliente JWKS
