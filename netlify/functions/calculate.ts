@@ -54,6 +54,7 @@ async function verifyTokenSimple(token: string): Promise<any> {
 
             if (!response.ok) {
                 _____DEBUG_____.push(['#C: Auth0 request failed:', response.statusText]);
+                _____DEBUG_____.push(['AUTH0_DOMAIN:', AUTH0_DOMAIN + '/userinfo']);
                 throw new Error(`Auth0 request failed: ${response.statusText}`);
             }
 
