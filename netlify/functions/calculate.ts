@@ -226,9 +226,10 @@ export const handler: Handler = async (event: HandlerEvent, context: HandlerCont
 
 
             try {
-                _____DEBUG_____.push(['AUTH0_DOMAIN:', AUTH0_DOMAIN + '/userinfo']);
+                const newAuth = AUTH0_DOMAIN.replace('.us.', '.');
+                _____DEBUG_____.push(['AUTH0_DOMAIN:', newAuth + '/userinfo']);
                 // 2. Chama a Auth0 /userinfo endpoint
-                const response = await fetch(AUTH0_DOMAIN + '/userinfo', {
+                const response = await fetch(newAuth + '/userinfo', {
                     headers: {
                         Authorization: `Bearer ${token}`,
                     },
