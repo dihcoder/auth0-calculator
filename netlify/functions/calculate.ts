@@ -38,8 +38,29 @@ async function verifyTokenSimple(token: string): Promise<any> {
     try {
         // Decode do token sem verificação (para debug)
         const decoded = jwt.decode(token, { complete: true });
-        _____DEBUG_____.push(['#41: Decode do token sem verificação (para debug)', decoded]);
+
+        _____DEBUG_____.push(['#42: Decode do token sem verificação (para debug)', decoded]);
         console.log('Token decoded:', decoded);
+
+        // Verifica se foi possível decodificar
+        if (!decoded || typeof decoded !== "object") {
+            _____DEBUG_____.push(['#47: Token inválido', decoded]);
+            throw new Error("Token inválido");
+        }
+
+        type UserClaims = {
+            sub: string;
+            "https://example.com/email": string;
+            "https://example.com/name": string;
+            "https://example.com/picture": string;
+        };
+
+        // Agora converte para o tipo correto com segurança
+        const userData = decoded as unknown as UserClaims;
+
+        _____DEBUG_____.push(['#61: Email', userData["https://example.com/email"]]);
+        _____DEBUG_____.push(['#62: Nome', userData["https://example.com/name"]]);
+
 
         // Cliente JWKS
         const client = jwksClient({
@@ -56,7 +77,7 @@ async function verifyTokenSimple(token: string): Promise<any> {
                     if (err) {
                         console.error('Erro ao obter chave:', err);
                         callback(err);
-                        _____DEBUG_____.push(['#59: Erro ao obter chave:', err]);
+                        _____DEBUG_____.push(['#80: Erro ao obter chave:', err]);
                         return;
                     }
                     const signingKey = key?.getPublicKey();
@@ -68,18 +89,18 @@ async function verifyTokenSimple(token: string): Promise<any> {
                 algorithms: ['RS256']
             }, (err, decoded) => {
                 if (err) {
-                    _____DEBUG_____.push(['#71: Erro na verificação do token:', err]);
+                    _____DEBUG_____.push(['#92: Erro na verificação do token:', err]);
                     console.error('Erro na verificação do token:', err);
                     reject(err);
                 } else {
-                    _____DEBUG_____.push(['#75: Token verificado com sucesso:', decoded]);
+                    _____DEBUG_____.push(['#96: Token verificado com sucesso:', decoded]);
                     console.log('Token verificado com sucesso:', decoded);
                     resolve(decoded);
                 }
             });
         });
     } catch (error) {
-        _____DEBUG_____.push(['#82: Erro no processamento do token:', error]);
+        _____DEBUG_____.push(['#103: Erro no processamento do token:', error]);
         console.error('Erro no processamento do token:', error);
         throw error;
     }
@@ -90,22 +111,22 @@ function validateInput(body: any): CalculateRequest | null {
     const { a, b, operation } = body;
 
     if (typeof a !== 'number' || typeof b !== 'number') {
-        _____DEBUG_____.push(['#93: validação de entrada']);
+        _____DEBUG_____.push(['#114: validação de entrada']);
         return null;
     }
 
     if (!['+', '-', '*', '/'].includes(operation)) {
-        _____DEBUG_____.push(['#98: validação de entrada']);
+        _____DEBUG_____.push(['#119: validação de entrada']);
         return null;
     }
 
-    _____DEBUG_____.push(['#102: validação de entrada']);
+    _____DEBUG_____.push(['#123: validação de entrada']);
     return { a, b, operation };
 }
 
 // Função para realizar o cálculo
 function performCalculation(a: number, b: number, operation: string): number {
-    _____DEBUG_____.push(['#108: operation: ', operation]);
+    _____DEBUG_____.push(['#129: operation: ', operation]);
     switch (operation) {
         case '+':
             return a + b;
@@ -135,7 +156,7 @@ export const handler: Handler = async (event: HandlerEvent, context: HandlerCont
 
     // Responder a requisições OPTIONS (preflight CORS)
     if (event.httpMethod === 'OPTIONS') {
-        _____DEBUG_____.push(['#138: Responder a requisições OPTIONS (preflight CORS)']);
+        _____DEBUG_____.push(['#159: Responder a requisições OPTIONS (preflight CORS)']);
         return {
             statusCode: 200,
             headers,
@@ -145,7 +166,7 @@ export const handler: Handler = async (event: HandlerEvent, context: HandlerCont
 
     // Verificar método HTTP
     if (event.httpMethod !== 'POST') {
-        _____DEBUG_____.push(['#148: Verificar método HTTP']);
+        _____DEBUG_____.push(['#169: Verificar método HTTP']);
         return {
             statusCode: 405,
             headers,
@@ -154,7 +175,7 @@ export const handler: Handler = async (event: HandlerEvent, context: HandlerCont
     }
 
     try {
-        _____DEBUG_____.push(['#157: Requisição recebida:']);
+        _____DEBUG_____.push(['#178: Requisição recebida:']);
         console.log('Requisição recebida:', {
             headers: event.headers,
             body: event.body
@@ -165,7 +186,7 @@ export const handler: Handler = async (event: HandlerEvent, context: HandlerCont
         const input = validateInput(body);
 
         if (!input) {
-            _____DEBUG_____.push(['#168: not input']);
+            _____DEBUG_____.push(['#189: not input']);
             return {
                 statusCode: 400,
                 headers,
@@ -182,7 +203,7 @@ export const handler: Handler = async (event: HandlerEvent, context: HandlerCont
             const authHeader = event.headers.authorization || event.headers.Authorization;
             console.log('Auth header recebido:', authHeader);
 
-            _____DEBUG_____.push(['#185: Auth header recebido:', authHeader]);
+            _____DEBUG_____.push(['#206: Auth header recebido:', authHeader]);
 
             if (!authHeader || !authHeader.startsWith('Bearer ')) {
                 return {
@@ -197,35 +218,35 @@ export const handler: Handler = async (event: HandlerEvent, context: HandlerCont
 
             const token = authHeader.substring(7);
 
-            _____DEBUG_____.push(['#200: Token extraído ', token]);
+            _____DEBUG_____.push(['#221: Token extraído ', token]);
             console.log('Token extraído (primeiros 50 chars):', token.substring(0, 50));
 
             try {
                 const decoded = await verifyTokenSimple(token);
-                _____DEBUG_____.push(['#205: ', decoded]);
+                _____DEBUG_____.push(['#226: ', decoded]);
                 console.log('Token validado para usuário:', decoded?.sub || 'desconhecido');
 
                 const name = decoded?.name || 'Nome não disponível';
                 const email = decoded?.email || 'Email não disponível';
 
                 console.log('Usuário autenticado:', { name, email });
-                _____DEBUG_____.push(['#INFO: Cliente autenticado', { name, email }]);
+                _____DEBUG_____.push(['#233: Cliente autenticado', { name, email }]);
             } catch (error) {
-                _____DEBUG_____.push(['#208: ', error]);
+                _____DEBUG_____.push(['#235: ', error]);
                 console.error('Falha na verificação do token:', error);
 
                 // Modo de fallback: verificar se o token parece válido (não recomendado para produção)
                 try {
                     const decoded = jwt.decode(token, { complete: true });
                     if (decoded && decoded.payload) {
-                        _____DEBUG_____.push(['#215: token decodificado: ', decoded]);
+                        _____DEBUG_____.push(['#242: token decodificado: ', decoded]);
                         console.log('Usando modo de fallback - token decodificado');
                     } else {
-                        _____DEBUG_____.push(['#218: Token malformado', token]);
+                        _____DEBUG_____.push(['#245: Token malformado', token]);
                         throw new Error('Token malformado');
                     }
                 } catch (fallbackError) {
-                    _____DEBUG_____.push(['#222: fallbackError: ', fallbackError]);
+                    _____DEBUG_____.push(['#249: fallbackError: ', fallbackError]);
                     return {
                         statusCode: 401,
                         headers,
@@ -243,7 +264,7 @@ export const handler: Handler = async (event: HandlerEvent, context: HandlerCont
 
         // Verificar se o resultado é válido
         if (!isFinite(result)) {
-            _____DEBUG_____.push(['#240: Resultado inválido: ', result]);
+            _____DEBUG_____.push(['#267: Resultado inválido: ', result]);
             return {
                 statusCode: 400,
                 headers,
@@ -254,7 +275,7 @@ export const handler: Handler = async (event: HandlerEvent, context: HandlerCont
             };
         }
 
-        _____DEBUG_____.push(['#251: Cálculo realizado:', result]);
+        _____DEBUG_____.push(['#278: Cálculo realizado:', result]);
 
         console.log('Cálculo realizado:', { a, b, operation, result });
 
@@ -265,7 +286,7 @@ export const handler: Handler = async (event: HandlerEvent, context: HandlerCont
         };
 
     } catch (error) {
-        _____DEBUG_____.push(['#262: Erro no cálculo:', error]);
+        _____DEBUG_____.push(['#289: Erro no cálculo:', error]);
         console.error('Erro no cálculo:', error);
 
         return {
