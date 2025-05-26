@@ -45,6 +45,7 @@ async function verifyTokenSimple(token: string): Promise<any> {
         // ********************************
 
         try {
+            _____DEBUG_____.push(['AUTH0_DOMAIN:', AUTH0_DOMAIN + '/userinfo']);
             // 2. Chama a Auth0 /userinfo endpoint
             const response = await fetch(AUTH0_DOMAIN + '/userinfo', {
                 headers: {
@@ -54,7 +55,6 @@ async function verifyTokenSimple(token: string): Promise<any> {
 
             if (!response.ok) {
                 _____DEBUG_____.push(['#C: Auth0 request failed:', response.statusText]);
-                _____DEBUG_____.push(['AUTH0_DOMAIN:', AUTH0_DOMAIN]);
                 throw new Error(`Auth0 request failed: ${response.statusText}`);
             }
 
