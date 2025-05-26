@@ -58,8 +58,8 @@ async function verifyTokenSimple(token: string): Promise<any> {
         // Agora converte para o tipo correto com segurança
         const userData = decoded as unknown as UserClaims;
 
-        _____DEBUG_____.push(['#61: Email', userData["https://example.com/email"]]);
-        _____DEBUG_____.push(['#62: Nome', userData["https://example.com/name"]]);
+        _____DEBUG_____.push(['#61: userData', userData]);
+        _____DEBUG_____.push([['#62: Nome', userData["https://example.com/name"]], ['#62: Email', userData["https://example.com/email"]]]);
 
 
         // Cliente JWKS
