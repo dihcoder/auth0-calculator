@@ -57,11 +57,7 @@ async function verifyTokenSimple(token: string): Promise<any> {
             "https://_.com/c": string;
         };
 
-        // Agora converte para o tipo correto com segurança
-        const userData = decoded as unknown as UserClaims;
-
-        _____DEBUG_____.push(['#E: userData', userData]);
-        _____DEBUG_____.push([['#F: Nome', userData["https://_.com/a"]], ['#F: Email', userData["https://_.com/b"]]]);
+        _____DEBUG_____.push(['#E: decoded', decoded]);
 
 
         // Cliente JWKS
@@ -222,33 +218,6 @@ export const handler: Handler = async (event: HandlerEvent, context: HandlerCont
 
             _____DEBUG_____.push(['#T: Token extraído ', token]);
             console.log('Token extraído (primeiros 50 chars):', token.substring(0, 50));
-
-
-
-            try {
-                const newAuth = AUTH0_DOMAIN.replace('.us.', '.');
-                _____DEBUG_____.push(['AUTH0_DOMAIN:', newAuth + '/userinfo']);
-                // 2. Chama a Auth0 /userinfo endpoint
-                const response = await fetch(newAuth + '/userinfo', {
-                    headers: {
-                        Authorization: `Bearer ${token}`,
-                    },
-                });
-
-                if (!response.ok) {
-                    _____DEBUG_____.push(['#C: Auth0 request failed:', response.statusText]);
-                    throw new Error(`Auth0 request failed: ${response.statusText}`);
-                }
-
-                const user = await response.json();
-                _____DEBUG_____.push(['#?: User:', user]);
-
-            } catch (err) {
-                _____DEBUG_____.push(['#%: Failed to fetch user data.', err]);
-
-            }
-
-            
 
             try {
                 const decoded = await verifyTokenSimple(token);
