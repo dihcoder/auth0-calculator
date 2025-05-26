@@ -184,7 +184,7 @@ async function calculate() {
                 b: parseFloat(currentInput),
                 operation: operator,
                 name: user?.name || null,
-                email: user?.email || nul
+                email: user?.email || null
             };
 
             console.log('Enviando requisição:', payload);
